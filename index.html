@@ -1,0 +1,1373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mr-Pythoneer — Engineering Record</title>
+<meta name="description" content="Mr-Pythoneer builds operating systems, LLM training pipelines, embedded firmware and shipped applications. Available for freelance work.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="Mr-Pythoneer — Engineering Record">
+<meta property="og:description" content="Operating systems, LLM tooling, embedded firmware, shipped apps. Available for freelance work.">
+<meta property="og:type" content="profile">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23071019'/%3E%3Cpath d='M6 26V6h4l6 10 6-10h4v20h-4V14l-6 10-6-10v12z' fill='%235eeaff'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ground:#071019;
+  --ground-2:#050c13;
+  --panel:#0a1a26;
+  --panel-2:#0c2130;
+
+  --grid-minor:rgba(94,234,255,.055);
+  --grid-major:rgba(94,234,255,.11);
+
+  --line:#2b5d72;
+  --line-2:#3f7f99;
+  --stroke:#7fd6ea;
+  --bright:#5eeaff;
+
+  --ink:#d8f2f8;
+  --ink-2:#93b4c4;
+  --ink-3:#5f8195;
+
+  --accent:#ffb347;
+  --redline:#ff6b4a;
+
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  --node-w:216px;
+  --r:2px;
+}
+
+/* ============================================================
+   RESET / BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:var(--mono);
+  font-size:13px;
+  line-height:1.6;
+  color:var(--ink);
+  background-color:var(--ground);
+  background-image:
+    repeating-linear-gradient(0deg,transparent 0 23px,var(--grid-minor) 23px 24px),
+    repeating-linear-gradient(90deg,transparent 0 23px,var(--grid-minor) 23px 24px),
+    repeating-linear-gradient(0deg,transparent 0 119px,var(--grid-major) 119px 120px),
+    repeating-linear-gradient(90deg,transparent 0 119px,var(--grid-major) 119px 120px);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,p,ul,ol,figure{margin:0}
+ul{padding:0;list-style:none}
+a{color:var(--bright);text-decoration:none;border-bottom:1px solid rgba(94,234,255,.32)}
+a:hover{border-bottom-color:var(--bright)}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.wrap{max-width:1400px;margin:0 auto;padding:0 28px}
+.hide{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:-9999px;top:0;z-index:99;background:var(--accent);color:#000;padding:10px 16px}
+.skip:focus{left:8px;top:8px}
+
+/* label styling used everywhere */
+.lbl{
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+
+/* ============================================================
+   DRAFTING FURNITURE
+   ============================================================ */
+.sheet{position:relative;border:1px solid var(--line);margin:22px 0 0}
+.sheet::before,.sheet::after{
+  content:"";position:absolute;inset:6px;border:1px solid rgba(94,234,255,.12);pointer-events:none;
+}
+.sheet::after{inset:0;border:none}
+
+/* corner registration marks */
+.reg{position:absolute;width:22px;height:22px;pointer-events:none;opacity:.75}
+.reg::before,.reg::after{content:"";position:absolute;background:var(--line-2)}
+.reg::before{width:100%;height:1px;top:50%}
+.reg::after{height:100%;width:1px;left:50%}
+.reg.tl{top:-11px;left:-11px}.reg.tr{top:-11px;right:-11px}
+.reg.bl{bottom:-11px;left:-11px}.reg.br{bottom:-11px;right:-11px}
+
+/* sheet header strip */
+.sheet-head{
+  display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;justify-content:space-between;
+  padding:12px 18px;border-bottom:1px solid var(--line);
+  background:rgba(5,12,19,.55);
+}
+.sheet-head .t{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2)}
+.sheet-head .n{font-size:11px;letter-spacing:.14em;color:var(--ink-3)}
+
+/* dimension line */
+.dim{display:flex;align-items:center;gap:10px;padding:0 4px;color:var(--ink-3)}
+.dim .bar{flex:1;height:1px;background:var(--line);position:relative}
+.dim .bar::before,.dim .bar::after{
+  content:"";position:absolute;top:-4px;width:1px;height:9px;background:var(--line-2);
+}
+.dim .bar::before{left:0}.dim .bar::after{right:0}
+.dim .v{font-size:10px;letter-spacing:.18em;white-space:nowrap;text-transform:uppercase}
+
+/* title block */
+.titleblock{
+  border:1px solid var(--line);background:rgba(5,12,19,.82);
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.tb{padding:9px 12px;border-right:1px solid var(--line);border-top:1px solid var(--line)}
+.tb:nth-child(-n+4){border-top:none}
+.tb:nth-child(4n){border-right:none}
+.tb .k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);display:block}
+.tb .v{font-size:12px;color:var(--ink);letter-spacing:.06em}
+.tb .v.rev{color:var(--redline)}
+
+/* section marker between sheets */
+.sectmark{display:flex;align-items:center;gap:14px;margin:34px 0 6px;color:var(--ink-3)}
+.sectmark .rule{flex:1;height:1px;background:var(--line)}
+.sectmark .badge{
+  border:1px solid var(--line-2);padding:5px 12px;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--stroke);background:rgba(10,26,38,.7);
+}
+
+/* ============================================================
+   MASTHEAD
+   ============================================================ */
+.masthead{padding:34px 0 8px}
+.masthead .eyebrow{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-3)}
+.masthead h1{
+  font-size:clamp(32px,7vw,66px);line-height:1;letter-spacing:.02em;font-weight:600;
+  margin:12px 0 0;color:var(--ink);
+}
+.masthead h1 .dim-part{color:var(--ink-3)}
+.masthead .sub{margin-top:14px;max-width:62ch;color:var(--ink-2);font-size:14px;line-height:1.7}
+.masthead .avail{
+  display:inline-flex;align-items:center;gap:9px;margin-top:18px;
+  border:1px solid var(--accent);color:var(--accent);
+  padding:6px 13px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+}
+.masthead .avail .dot{width:6px;height:6px;background:var(--accent);border-radius:50%}
+
+/* ============================================================
+   LAYOUT: diagram + terminal rail
+   ============================================================ */
+.plate{display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:0}
+.plate > .diagram-col{border-right:1px solid var(--line);min-width:0}
+.rail{padding:16px;display:flex;flex-direction:column;gap:16px;background:rgba(5,12,19,.4)}
+
+/* ============================================================
+   STAGE / RING
+   ============================================================ */
+.stage{position:relative;min-height:1030px;padding:24px}
+.traces{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.traces path.trace{fill:none;stroke:var(--line-2);stroke-width:1.25;stroke-linejoin:miter}
+.traces path.pulse{fill:none;stroke:var(--bright);stroke-width:1.6;opacity:.9}
+.traces circle.pad{fill:var(--ground);stroke:var(--stroke);stroke-width:1.25}
+.traces path.trace.on{stroke:var(--bright);stroke-width:1.75}
+.traces circle.pad.on{fill:var(--bright);stroke:var(--bright)}
+
+/* node placement (desktop ring) */
+.stage .node{position:absolute;transform:translate(-50%,-50%);width:var(--node-w)}
+.stage .node[data-pos="c"]{left:50%;top:50%;width:302px}
+.stage .node[data-pos="n"]{left:50%;top:8%}
+.stage .node[data-pos="ul"]{left:14%;top:30%}
+.stage .node[data-pos="ur"]{left:86%;top:30%}
+.stage .node[data-pos="ll"]{left:18%;top:86%}
+.stage .node[data-pos="lr"]{left:82%;top:86%}
+/* a filter can hide every flagship — don't leave a tall empty sheet */
+.stage.solo{min-height:0}
+.stage.solo .node[data-pos]{position:static;transform:none;width:auto;max-width:340px;margin:0 auto}
+
+/* ============================================================
+   NODES
+   ============================================================ */
+.node{position:relative}
+.node .box{
+  display:flex;flex-direction:column;width:100%;
+  border:1px solid var(--line-2);background:rgba(10,26,38,.94);
+  position:relative;
+  transition:border-color .18s ease,background .18s ease,transform .18s ease;
+}
+.node .box::before{
+  content:"";position:absolute;inset:3px;border:1px solid rgba(94,234,255,.09);pointer-events:none;
+}
+.node .box:hover,.node .box.open{border-color:var(--bright);background:var(--panel-2)}
+.node .box:hover{transform:translateY(-1px)}
+.node .boxbtn{display:block;width:100%;padding:12px 13px 13px;flex:1}
+/* per-project links live in the DOM at all times, not just inside the drawer */
+.node .nlinks{display:flex;flex-wrap:wrap;gap:6px;padding:0 13px 11px;position:relative;z-index:1}
+.node .nlinks a{
+  border:1px solid var(--line);border-bottom-color:var(--line);
+  padding:2px 8px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+}
+.node .nlinks a:hover{color:var(--bright);border-color:var(--bright);background:rgba(94,234,255,.07)}
+.node .ref{font-size:9px;letter-spacing:.2em;color:var(--ink-3);display:flex;justify-content:space-between;gap:8px}
+.node .nm{font-size:15px;letter-spacing:.02em;margin-top:7px;font-weight:600;color:var(--ink)}
+.node .tag{font-size:11.5px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+.node[data-pos="c"] .nm{font-size:19px}
+
+/* centre node */
+.node.centre .box{border-color:var(--stroke);background:rgba(12,33,48,.97);padding:16px 17px 17px}
+.node.centre .role{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--bright);margin-top:3px}
+.node.centre .caps{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.node.centre .caps li{display:flex;gap:8px;font-size:11.5px;color:var(--ink-2)}
+.node.centre .caps li::before{content:"—";color:var(--line-2)}
+.node.centre .cta{
+  display:block;margin-top:14px;text-align:center;
+  border:1px solid var(--accent);color:var(--accent);
+  padding:8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  background:rgba(255,179,71,.06);
+}
+.node.centre .cta:hover{background:var(--accent);color:#08131b}
+
+/* status badges */
+.badge{
+  display:inline-block;border:1px solid;padding:1px 6px;
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;
+}
+.badge.live{color:var(--bright);border-color:rgba(94,234,255,.5)}
+.badge.shipped{color:#7fe0b0;border-color:rgba(127,224,176,.45)}
+.badge.progress{color:var(--accent);border-color:rgba(255,179,71,.5)}
+.badge.private{color:var(--ink-3);border-color:var(--line)}
+
+/* stack chips */
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.chips li{
+  font-size:9.5px;letter-spacing:.06em;color:var(--ink-3);
+  border:1px solid var(--line);padding:1px 5px;
+}
+
+/* ============================================================
+   ARCHIVE
+   ============================================================ */
+.group{margin-top:30px;position:relative;padding-left:26px}
+.group::before{
+  content:"";position:absolute;left:6px;top:8px;bottom:8px;width:1px;background:var(--line);
+}
+.group > .ghead{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative}
+.group > .ghead::before{
+  content:"";position:absolute;left:-20px;top:50%;width:20px;height:1px;background:var(--line-2);
+}
+.group h3{font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--stroke);font-weight:600}
+.group .gcount{font-size:10px;letter-spacing:.14em;color:var(--ink-3)}
+.group .grule{flex:1;height:1px;background:var(--line)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+.grid .node{width:auto}
+.grid .node.filtered-out{display:none}
+
+/* ============================================================
+   DETAIL DRAWER
+   ============================================================ */
+.drawer{
+  grid-column:1/-1;
+  border:1px solid var(--bright);background:rgba(9,24,35,.98);
+  padding:18px 20px;margin-top:2px;position:relative;
+}
+.drawer[hidden]{display:none}
+.drawer::before{content:"";position:absolute;inset:4px;border:1px solid rgba(94,234,255,.14);pointer-events:none}
+.drawer .dhead{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between}
+.drawer .dtitle{font-size:19px;letter-spacing:.02em}
+.drawer .dref{font-size:10px;letter-spacing:.2em;color:var(--ink-3)}
+.drawer .dbody{margin-top:12px;max-width:80ch;color:var(--ink-2);font-size:13px;line-height:1.75}
+.drawer .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px}
+.drawer .meta .k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:5px}
+.drawer .links{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.drawer .links a{
+  border:1px solid var(--line-2);border-bottom-color:var(--line-2);
+  padding:6px 12px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--stroke);
+}
+.drawer .links a:hover{border-color:var(--bright);color:var(--bright);background:rgba(94,234,255,.07)}
+.drawer .close{
+  position:absolute;top:10px;right:12px;color:var(--ink-3);font-size:16px;line-height:1;padding:4px 6px;
+}
+.drawer .close:hover{color:var(--bright)}
+
+/* ============================================================
+   TERMINALS
+   ============================================================ */
+.term{border:1px solid var(--line);background:rgba(4,10,16,.9);display:flex;flex-direction:column;min-height:0}
+.term .bar{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;
+  border-bottom:1px solid var(--line);background:rgba(10,26,38,.9);
+}
+.term .bar .dots{display:flex;gap:4px}
+.term .bar .dots i{width:6px;height:6px;border:1px solid var(--line-2);border-radius:50%}
+.term .bar .name{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+.term .bar .st{margin-left:auto;font-size:9px;letter-spacing:.14em;color:var(--ink-3)}
+.term .body{padding:10px 11px;font-size:11.5px;line-height:1.65;overflow-y:auto;overflow-wrap:anywhere}
+#boot .body{height:270px}
+.term .body::-webkit-scrollbar{width:6px}
+.term .body::-webkit-scrollbar-thumb{background:var(--line)}
+.term .ln{white-space:pre-wrap}
+.term .ps{color:var(--bright)}
+.term .out{color:var(--ink-2)}
+.term .dimtxt{color:var(--ink-3)}
+.term .ok{color:#7fe0b0}
+.term .warn{color:var(--accent)}
+.term .err{color:var(--redline)}
+.cursor{display:inline-block;width:7px;height:13px;background:var(--bright);vertical-align:-2px;margin-left:1px}
+
+.prompt-row{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);padding:7px 11px}
+.prompt-row .ps{color:var(--bright);flex:none}
+.prompt-row input{
+  flex:1;min-width:0;background:none;border:none;color:var(--ink);font:inherit;font-size:11.5px;padding:0;
+}
+.prompt-row input:focus{outline:none}
+.prompt-row input::placeholder{color:var(--ink-3)}
+
+/* status readout */
+.readout{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:11px}
+.readout dt{color:var(--ink-3);letter-spacing:.1em}
+.readout dd{margin:0;color:var(--ink);text-align:right;overflow-wrap:anywhere}
+
+/* uplink */
+.uplink .cmd{
+  display:flex;align-items:center;gap:8px;border:1px solid var(--line-2);
+  padding:8px 10px;margin-bottom:9px;background:rgba(10,26,38,.6);
+}
+.uplink .cmd code{font-size:11.5px;color:var(--ink);overflow-wrap:anywhere}
+.uplink .copy{
+  margin-left:auto;flex:none;border:1px solid var(--line);padding:2px 7px;
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+}
+.uplink .copy:hover{color:var(--bright);border-color:var(--bright)}
+.uplink .copy.done{color:#7fe0b0;border-color:#7fe0b0}
+.uplink .row{display:flex;gap:8px;flex-wrap:wrap}
+.uplink .row a{
+  flex:1;text-align:center;border:1px solid var(--line-2);border-bottom-color:var(--line-2);
+  padding:7px 10px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--stroke);
+}
+.uplink .row a:hover{border-color:var(--bright);color:var(--bright);background:rgba(94,234,255,.07)}
+.uplink .row a.primary{border-color:var(--accent);color:var(--accent)}
+.uplink .row a.primary:hover{background:var(--accent);color:#08131b;border-color:var(--accent)}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer{margin:36px 0 44px}
+.foot-cta{
+  border:1px solid var(--line-2);padding:30px 26px;text-align:center;background:rgba(10,26,38,.6);
+}
+.foot-cta h2{font-size:clamp(20px,3.4vw,30px);letter-spacing:.02em;font-weight:600}
+.foot-cta p{margin-top:10px;color:var(--ink-2);max-width:60ch;margin-inline:auto;font-size:13px}
+.foot-cta .acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.foot-cta .acts a{
+  border:1px solid var(--line-2);border-bottom-color:var(--line-2);
+  padding:10px 20px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--stroke);
+}
+.foot-cta .acts a.primary{border-color:var(--accent);color:var(--accent)}
+.foot-cta .acts a.primary:hover{background:var(--accent);color:#08131b}
+.foot-cta .acts a:hover{border-color:var(--bright);color:var(--bright)}
+.colophon{
+  margin-top:16px;display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+}
+
+/* ============================================================
+   MOTION
+   ============================================================ */
+@media (prefers-reduced-motion:no-preference){
+  .traces path.trace{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .9s ease forwards;animation-delay:var(--d,0s)}
+  .traces circle.pad{opacity:0;animation:fade .4s ease forwards;animation-delay:calc(var(--d,0s) + .8s)}
+  .traces path.pulse{stroke-dasharray:5 var(--gap);stroke-dashoffset:var(--len);animation:flow 3.4s linear infinite;animation-delay:var(--d,0s)}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes fade{to{opacity:1}}
+  @keyframes flow{to{stroke-dashoffset:0}}
+  .cursor{animation:blink 1.05s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .node .box{will-change:transform}
+}
+@media (prefers-reduced-motion:reduce){
+  .traces path.pulse{display:none}
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  :root{--node-w:194px}
+  .stage{min-height:1000px}
+  .stage .node[data-pos="c"]{width:264px}
+  .stage .node[data-pos="ul"]{left:13%}
+  .stage .node[data-pos="ur"]{left:87%}
+}
+@media (max-width:1000px){
+  .plate{grid-template-columns:1fr}
+  .plate > .diagram-col{border-right:none;border-bottom:1px solid var(--line)}
+  .rail{flex-direction:row;flex-wrap:wrap}
+  .rail > .term{flex:1 1 300px}
+}
+/* --- ring collapses to a vertical spine --- */
+@media (max-width:900px){
+  .stage{min-height:0;padding:20px 20px 20px 44px}
+  .stage .node{position:static;transform:none;width:auto;margin-bottom:18px}
+  .stage .node[data-pos="c"]{width:auto;margin-bottom:26px}
+  .stage .node:last-child{margin-bottom:0}
+  .traces{overflow:visible}
+}
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .rail{flex-direction:column}
+  .rail > .term{flex:auto}
+  .titleblock{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tb:nth-child(-n+4){border-top:1px solid var(--line)}
+  .tb:nth-child(-n+2){border-top:none}
+  .tb:nth-child(4n){border-right:1px solid var(--line)}
+  .tb:nth-child(2n){border-right:none}
+  .grid{grid-template-columns:1fr}
+  .group{padding-left:18px}
+  .sheet-head{padding:10px 12px}
+  .stage{padding:16px 14px 16px 34px}
+  #boot .body{height:220px}
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print{
+  :root{--ink:#000;--ink-2:#222;--ink-3:#555;--line:#999;--line-2:#666;--stroke:#000;--bright:#000;--accent:#000}
+  body{background:#fff!important;color:#000;font-size:10pt}
+  .rail,.traces,.reg,.skip,.drawer .close,.masthead .avail .dot{display:none!important}
+  .plate{grid-template-columns:1fr}
+  .plate > .diagram-col{border:none}
+  .stage{min-height:0;padding:0}
+  .stage .node{position:static!important;transform:none!important;width:auto!important;margin-bottom:10pt}
+  .node .box{border:1px solid #999;background:#fff!important;break-inside:avoid}
+  .grid{grid-template-columns:1fr 1fr}
+  .drawer{display:block!important;position:static;border:1px solid #999;background:#fff}
+  .sheet{border-color:#999;break-inside:auto}
+  a{color:#000;border:none}
+  .drawer .links a::after,.node a::after{content:" (" attr(href) ")";font-size:8pt;color:#555}
+  .foot-cta{border:1px solid #999;background:#fff}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="wrap">
+
+  <!-- ======================= MASTHEAD ======================= -->
+  <header class="masthead">
+    <p class="eyebrow">Engineering Record &nbsp;/&nbsp; Drawing No. MP-2026-001</p>
+    <h1>MR<span class="dim-part">-</span>PYTHONEER</h1>
+    <p class="sub">
+      I build the layers most people skip. A Linux distribution that reconfigures itself
+      for the job at hand. A fine-tuning pipeline that trains small language models on one GPU.
+      Firmware for boards that fit on a fingernail. Applications that actually ship.
+      Same person, all four.
+    </p>
+    <p><span class="avail"><span class="dot"></span>Available for freelance work</span></p>
+  </header>
+
+  <!-- ======================= SHEET 1 ======================= -->
+  <main id="main">
+  <section class="sheet" aria-labelledby="sheet1-title">
+    <span class="reg tl"></span><span class="reg tr"></span><span class="reg bl"></span><span class="reg br"></span>
+
+    <div class="sheet-head">
+      <h2 class="t" id="sheet1-title">Sheet 1 — Principal Assembly</h2>
+      <span class="n">Ring topology · 5 flagship subsystems · root node = operator</span>
+    </div>
+
+    <div class="plate">
+      <!-- ---------- diagram ---------- -->
+      <div class="diagram-col">
+        <div class="stage" id="stage">
+          <svg class="traces" id="traces" aria-hidden="true" focusable="false" preserveAspectRatio="none"></svg>
+
+          <!-- CENTRE NODE : the resume -->
+          <article class="node centre" data-pos="c" id="node-root">
+            <div class="box">
+              <p class="ref"><span>NODE 00</span><span>ROOT</span></p>
+              <h3 class="nm">The Operator</h3>
+              <p class="role">Systems · AI Tooling · Embedded · Apps</p>
+              <p class="tag">Self-directed engineer working end to end — from the bootloader up to the
+                landing page. I take unglamorous, deep problems and ship something that runs.</p>
+              <ul class="caps">
+                <li>OS &amp; distro engineering — Bash, live-build, GNOME</li>
+                <li>LLM fine-tuning — Unsloth, LoRA/QLoRA, GGUF export</li>
+                <li>Embedded C/C++ — ESP32, STM32, Arduino, ESP-IDF</li>
+                <li>Full-stack apps — TypeScript, React, Electron, Python</li>
+                <li>Native macOS — Swift, IOKit, Vision, Speech</li>
+              </ul>
+              <a class="cta" href="#contact">Hire me →</a>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- ---------- terminal rail ---------- -->
+      <aside class="rail" aria-label="Console modules">
+
+        <!-- BOOT -->
+        <section class="term" id="boot" aria-labelledby="boot-name">
+          <div class="bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="name" id="boot-name">boot · whoami</span>
+            <span class="st" id="boot-st">RUN</span>
+          </div>
+          <div class="body" id="boot-body" aria-hidden="true"></div>
+          <p class="hide">
+            Mr-Pythoneer. Independent systems and embedded engineer. Four active domains:
+            operating systems, AI and machine-learning tooling, embedded firmware, and applications.
+            Currently available for freelance work. Contact gf9929986@gmail.com.
+            Type a command in the console below, or read the full project list further down this page.
+          </p>
+          <form class="prompt-row" id="promptForm" autocomplete="off">
+            <label class="ps" for="cmd">&gt;</label>
+            <input id="cmd" name="cmd" placeholder="type `help` and press enter" spellcheck="false">
+          </form>
+        </section>
+
+        <!-- STATUS -->
+        <section class="term" aria-labelledby="stat-name">
+          <div class="bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="name" id="stat-name">sys.status</span>
+            <span class="st ok">OK</span>
+          </div>
+          <div class="body">
+            <dl class="readout">
+              <dt>UTC</dt><dd id="s-clock">—</dd>
+              <dt>VIEWPORT</dt><dd id="s-vp">—</dd>
+              <dt>PROJECTS</dt><dd id="s-proj">—</dd>
+              <dt>DOMAINS</dt><dd id="s-dom">—</dd>
+              <dt>FILTER</dt><dd id="s-filter">ALL</dd>
+              <dt>RENDER</dt><dd id="s-render">—</dd>
+              <dt>MOTION</dt><dd id="s-motion">—</dd>
+              <dt>EXT. REQ</dt><dd class="ok">0</dd>
+            </dl>
+          </div>
+        </section>
+
+        <!-- UPLINK -->
+        <section class="term uplink" id="contact" aria-labelledby="up-name">
+          <div class="bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <span class="name" id="up-name">uplink</span>
+            <span class="st">OPEN</span>
+          </div>
+          <div class="body">
+            <div class="cmd">
+              <span class="ps">$</span>
+              <code id="mailtxt">gf9929986@gmail.com</code>
+              <button class="copy" id="copyBtn" type="button" aria-label="Copy email address to clipboard">Copy</button>
+            </div>
+            <div class="row">
+              <a class="primary" href="mailto:gf9929986@gmail.com?subject=Freelance%20enquiry">Email</a>
+              <a href="https://github.com/Mr-Pythoneer" rel="noopener">GitHub</a>
+            </div>
+            <p class="dimtxt" style="margin-top:10px;font-size:10.5px">
+              Freelance work, contract builds, and hard problems in systems, ML tooling, or firmware.
+            </p>
+          </div>
+        </section>
+
+      </aside>
+    </div>
+
+    <!-- dimension line -->
+    <div style="padding:14px 18px;border-top:1px solid var(--line)">
+      <div class="dim">
+        <span class="v" id="dim-a">—</span>
+        <span class="bar"></span>
+        <span class="v" id="dim-b">—</span>
+        <span class="bar"></span>
+        <span class="v">EST. 2025</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= SECTION MARKER ======================= -->
+  <div class="sectmark">
+    <span class="rule"></span>
+    <span class="badge">Sheet 2 — Full Index</span>
+    <span class="rule"></span>
+  </div>
+
+  <!-- ======================= SHEET 2 : ARCHIVE ======================= -->
+  <section class="sheet" aria-labelledby="sheet2-title">
+    <span class="reg tl"></span><span class="reg tr"></span><span class="reg bl"></span><span class="reg br"></span>
+    <div class="sheet-head">
+      <h2 class="t" id="sheet2-title">Sheet 2 — Complete Works Index</h2>
+      <span class="n">Grouped by domain · select any node for detail</span>
+    </div>
+    <div style="padding:6px 22px 26px" id="archive"></div>
+  </section>
+
+  <!-- ======================= TITLE BLOCK ======================= -->
+  <div class="titleblock" style="margin-top:22px">
+    <div class="tb"><span class="k">Drawn by</span><span class="v">MR-PYTHONEER</span></div>
+    <div class="tb"><span class="k">Title</span><span class="v">Personal Engineering Record</span></div>
+    <div class="tb"><span class="k">Drawing no.</span><span class="v">MP-2026-001</span></div>
+    <div class="tb"><span class="k">Scale</span><span class="v">1:1</span></div>
+    <div class="tb"><span class="k">Sheet</span><span class="v">2 of 2</span></div>
+    <div class="tb"><span class="k">Revision</span><span class="v rev">C</span></div>
+    <div class="tb"><span class="k">Status</span><span class="v">Released</span></div>
+    <div class="tb"><span class="k">Date</span><span class="v" id="tb-date">—</span></div>
+  </div>
+  </main>
+
+  <!-- ======================= FOOTER ======================= -->
+  <footer>
+    <div class="foot-cta">
+      <h2>Got something difficult?</h2>
+      <p>
+        I work best on the problems other people route around — bring me the firmware that
+        won't enumerate, the training pipeline that needs building from scratch, or the product
+        that has to ship on three platforms next month.
+      </p>
+      <div class="acts">
+        <a class="primary" href="mailto:gf9929986@gmail.com?subject=Freelance%20enquiry">gf9929986@gmail.com</a>
+        <a href="https://github.com/Mr-Pythoneer" rel="noopener">github.com/Mr-Pythoneer</a>
+      </div>
+    </div>
+    <div class="colophon">
+      <span>Mr-Pythoneer · Engineering Record</span>
+      <span>Hand-built · single file · zero dependencies · zero external requests</span>
+      <span id="cf-year">—</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var T0 = performance.now();
+var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============================================================
+   DATA
+   ============================================================ */
+var DOMAINS = [
+  {id:"systems",  name:"Systems & OS"},
+  {id:"ai",       name:"AI & ML Tooling"},
+  {id:"embedded", name:"Embedded & Firmware"},
+  {id:"web",      name:"Applications & Web"}
+];
+
+var PROJECTS = [
+  /* ---------- FLAGSHIPS (ring) ---------- */
+  { id:"refract-os", pos:"n", flag:1, domain:"systems", status:"progress",
+    name:"Refract OS",
+    tag:"An Ubuntu-based Linux distribution that reshapes itself into five different machines.",
+    stack:["Bash","live-build","Ubuntu 24.04","GNOME","LM Studio"],
+    detail:"A full distribution with five switchable modes — Gaming, AI, Server, Creative and Normal — each one retuning the scheduler, services, power profile and installed stack for that workload. The AI mode is local-first, running models on the user's own hardware rather than an API. 64 shell files, all shellcheck-clean, built with live-build. The image builds and the documentation site is published; booting it on real hardware is the current milestone.",
+    links:[{l:"Docs site",u:"https://mr-pythoneer.github.io/refract-os/"},{l:"Repository",u:"https://github.com/Mr-Pythoneer/refract-os"}] },
+
+  { id:"kiln", pos:"ul", flag:1, domain:"ai", status:"progress",
+    name:"Kiln",
+    tag:"A config-driven LoRA / QLoRA fine-tuning pipeline for small language models on a single GPU.",
+    stack:["Python","Unsloth","TRL","pydantic v2","llama.cpp","FastAPI"],
+    detail:"You describe the run in one config file; Kiln handles dataset prep, LoRA or QLoRA training, evaluation and GGUF export end to end. Designed around the constraint of one consumer GPU rather than a cluster, which is where most people actually are. Includes a machine-verifiable validity checker so a model's output is graded by whether it really works, not by vibes. 31 tests green in CI; the CUDA training path is being brought up on real silicon now.",
+    links:[{l:"Product site",u:"https://mr-pythoneer.github.io/kiln-site/"}], note:"Source is private." },
+
+  { id:"rivulet", pos:"ur", flag:1, domain:"ai", status:"progress",
+    name:"Rivulet",
+    tag:"A peer-to-peer marketplace where idle machines sell their spare compute to people who need inference.",
+    stack:["TypeScript","Express","Socket.IO","React","Electron","Stripe","Playwright"],
+    detail:"A two-sided network: contributors donate idle GPU time, buyers submit inference jobs, and the matchmaker pairs them by geography and capability. TypeScript monorepo covering the coordination server, a React dashboard, an Electron client with a lock-screen contribution mode, Stripe payouts and Playwright end-to-end coverage. MVP, geographic matchmaking and job handoff are complete.",
+    links:[], note:"Source is private." },
+
+  { id:"ur-study-bro", pos:"lr", flag:1, domain:"web", status:"shipped",
+    name:"Ur Study Bro",
+    tag:"A cross-platform study application with a local AI tutor that never phones home.",
+    stack:["Electron 35","JavaScript","Ollama","Firebase","electron-builder"],
+    detail:"Focus timers, spaced-repetition flashcards, cognitive benchmark tests and an 80-badge progression system, wrapped around a tutor running on a local Ollama model so a student's notes stay on their own machine. Released at v5.2.6 with green CI producing macOS, Windows and Linux builds, plus a companion web app.",
+    links:[{l:"Live app",u:"https://mr-pythoneer.github.io/Ur-Study-Bro/"},{l:"Repository",u:"https://github.com/Mr-Pythoneer/Ur-Study-Bro"}] },
+
+  { id:"prowl", pos:"ll", flag:1, domain:"ai", status:"shipped",
+    name:"Prowl",
+    tag:"A voice-first desktop agent for macOS that runs entirely offline.",
+    stack:["Python 3.11","Ollama","Swift","Speech.framework","rumps"],
+    detail:"Speak to your Mac and it acts — 20 working skills spanning files, apps, system control and search. Speech recognition goes through Apple's native Speech framework via a Swift bridge; reasoning runs on a local Llama 3.2 model. Offline mode is on by default, so nothing leaves the machine.",
+    links:[{l:"Repository",u:"https://github.com/Mr-Pythoneer/prowl"}] },
+
+  /* ---------- SYSTEMS ---------- */
+  { id:"crucible12", domain:"systems", status:"live",
+    name:"Crucible12",
+    tag:"A local AI coding agent tuned for a specific high-end desktop.",
+    stack:["OpenCode","llama.cpp","Shell"],
+    detail:"A coding assistant that runs on your own hardware instead of an API, with model selection, quantisation and context sizing tuned for an RTX 5090 and a 9950X3D. Built around the argument that a well-configured local setup is enough for most day-to-day work.",
+    links:[{l:"Site",u:"https://mr-pythoneer.github.io/Crucible12/"}] },
+
+  { id:"hamsterpi", domain:"systems", status:"shipped",
+    name:"HamsterPi Validation Rig",
+    tag:"A headless Raspberry Pi 5 used as a real-Linux test bench for distro work.",
+    stack:["Raspberry Pi OS","systemd","picamera2","SSH"],
+    detail:"A 1GB Pi 5 running headless as a proper Linux target for validating distribution and service work that cannot be trusted to a macOS host. Provisioned SSH-only with systemd units and an MJPEG camera server, and thermally validated under sustained load.",
+    links:[] },
+
+  /* ---------- AI ---------- */
+  { id:"scad-slm", domain:"ai", status:"progress",
+    name:"scad-slm",
+    tag:"Teaching a small code model to turn plain English into printable OpenSCAD.",
+    stack:["Python","OpenSCAD CLI","Qwen2.5-Coder","Manifold"],
+    detail:"Most code-model evaluation is guesswork. This uses CAD as the test bed because correctness is machine-checkable: render the generated OpenSCAD and see whether it produces valid geometry. The data pipeline is proven end to end on a demo batch; training on the full corpus is next.",
+    links:[] },
+
+  { id:"claude-baby-mode", domain:"ai", status:"live",
+    name:"Claude Baby Mode",
+    tag:"A beginner-first coding assistant interface with a live preview pane.",
+    stack:["JavaScript","HTML","CSS"],
+    detail:"A stripped-down assistant UI aimed at people who have never written code, pairing plain-language guidance with a preview pane that shows the result of every change immediately, so the feedback loop is visual instead of textual.",
+    links:[{l:"Live",u:"https://mr-pythoneer.github.io/claude-baby-mode/"}] },
+
+  /* ---------- EMBEDDED ---------- */
+  { id:"claude-anywhere", domain:"embedded", status:"progress",
+    name:"Claude Anywhere",
+    tag:"A USB stick that serves an AI chat interface to any computer you plug it into.",
+    stack:["ESP32-S3","Arduino/C","arduino-cli","USB MSC"],
+    detail:"An M5Stack AtomS3U that enumerates as USB mass storage and simultaneously serves a chat web UI, so any host machine gets an assistant without installing anything. At v5.0, with a WiFi initialisation hang under investigation.",
+    links:[{l:"Repository",u:"https://github.com/Mr-Pythoneer/claude-anywhere"}] },
+
+  { id:"esp32-p4", domain:"embedded", status:"shipped",
+    name:"ESP32-P4 A/V Control",
+    tag:"Live camera, speech synthesis and on-device transcription over a single wired serial link.",
+    stack:["ESP-IDF 5.5","C","ES8311 codec","Python","Swift"],
+    detail:"A Waveshare ESP32-P4 dev kit streaming a live camera feed to a host, accepting typed text and speaking it through an ES8311 codec, and listening on the microphone with transcription — all multiplexed over one serial connection. Required writing around console/FIFO contention and codec driver quirks. All three features working.",
+    links:[], note:"Source is private." },
+
+  { id:"stackchan", domain:"embedded", status:"progress",
+    name:"Stackchan Assistant",
+    tag:"A desktop robot with a servo neck that tracks your face while it talks to you.",
+    stack:["M5 CoreS3","M5Unified","Feetech SCS0009","Apple Vision","Python"],
+    detail:"An M5 CoreS3 robot rebuilt into an assistant: the onboard camera feeds Apple's Vision framework for face detection, a Python bridge drives serial-bus servos to keep the head pointed at you, and a local LM Studio model supplies the conversation. Face tracking works over USB serial; the unit in hand has a faulty servo rail.",
+    links:[] },
+
+  { id:"cardputer", domain:"embedded", status:"shipped",
+    name:"Cardputer Arcade & Snack Compass",
+    tag:"Fifty games, twelve utilities and LoRa mesh chat on a credit-card computer.",
+    stack:["Arduino/C++","M5GFX","RadioLib SX1262","MQTT","NVS"],
+    detail:"A firmware family for the M5 Cardputer: a 50-game arcade with 12 phone-style utility apps and LoRa/MQTT messaging between units, plus Snack Compass — a GPS waypoint navigator that works without a magnetometer by deriving heading from movement. Flashed and smoke-tested on two physical units.",
+    links:[] },
+
+  { id:"stm32-macropad", domain:"embedded", status:"progress",
+    name:"STM32 Macropad",
+    tag:"A three-key USB HID macropad written bare-metal, no vendor framework.",
+    stack:["C","libopencm3","STM32F103","Make","ST-Link"],
+    detail:"A USB HID keyboard on an STM32F103 built directly against libopencm3 with a hand-written Makefile — no HAL, no Arduino layer. Compiles to roughly 6.5KB. Written mainly to understand the USB device stack from the descriptor up; enumeration is being brought up on hardware.",
+    links:[] },
+
+  { id:"attack-shark", domain:"embedded", status:"progress",
+    name:"Attack Shark R1 for Mac",
+    tag:"A native macOS CLI for a gaming mouse whose vendor only ships Windows software.",
+    stack:["Swift","IOKit HID","arm64"],
+    detail:"The manufacturer's configuration tool is Windows-only, so the HID protocol was reconstructed from a Linux driver and reimplemented as a single-file Swift CLI talking straight to IOKit. Byte-level output is verified against the reference protocol; validation against the physical device is pending.",
+    links:[] },
+
+  /* ---------- WEB ---------- */
+  { id:"ghostwire", domain:"web", status:"live",
+    name:"Ghostwire",
+    tag:"Debug a simulated microcontroller, then check your answer against a real one.",
+    stack:["Vanilla ES modules","Zero dependencies","No build step"],
+    detail:"A browser-based teaching tool: probe the pins of a simulated MCU, form a diagnosis, then diff it against a real serial log from actual hardware. The faults are drawn from genuine bugs hit while building the embedded projects on this page, and the seeds re-roll whenever a card is edited so it cannot be memorised.",
+    links:[{l:"Live",u:"https://mr-pythoneer.github.io/ghostwire/"},{l:"Repository",u:"https://github.com/Mr-Pythoneer/ghostwire"}] },
+
+  { id:"wanderlight", domain:"web", status:"live",
+    name:"Wanderlight",
+    tag:"A platformer played across several real browser windows you drag around your desktop.",
+    stack:["Single-file HTML","BroadcastChannel API"],
+    detail:"The fourth wall is the mechanic: the character moves between separate browser windows, and repositioning those windows on your desktop is how you solve the level. Windows coordinate through BroadcastChannel. Ships as one self-contained index.html.",
+    links:[{l:"Play",u:"https://mr-pythoneer.github.io/wanderlight/"},{l:"Repository",u:"https://github.com/Mr-Pythoneer/wanderlight"}] },
+
+  { id:"gamesx10", domain:"web", status:"live",
+    name:"Gamesx10",
+    tag:"Ten games in ten genres with every pixel drawn and every sound synthesised at runtime.",
+    stack:["Canvas","Web Audio API","Zero dependencies"],
+    detail:"No sprite sheets, no audio files, no libraries — all art is drawn procedurally to canvas and all sound is generated through the Web Audio API on the fly. Ten complete games across ten different genres, in a single payload.",
+    links:[{l:"Play",u:"https://mr-pythoneer.github.io/Gamesx10/"},{l:"Repository",u:"https://github.com/Mr-Pythoneer/Gamesx10"}] },
+
+  { id:"ai-startup-sim", domain:"web", status:"progress",
+    name:"AI Startup Sim",
+    tag:"A decision game about going from broke student to running an AI lab.",
+    stack:["JavaScript","JSON corpus","Node validators"],
+    detail:"A branching narrative driven by roughly 300 events and 70 hidden flags that quietly reshape which events can fire next, ending in one of 22 outcomes. The content corpus is complete and machine-validated; ending balance is being tuned.",
+    links:[] },
+
+  { id:"pc-build-visualizer", domain:"web", status:"progress",
+    name:"PC Build Visualizer",
+    tag:"A local-first parts database that shows in 3D whether your build physically fits.",
+    stack:["JavaScript","3D rendering","Local-first"],
+    detail:"Spec compatibility is easy; physical clearance is what actually ruins a build. This checks GPU length, cooler height and case volume in three dimensions against a local parts database that works without a network connection.",
+    links:[{l:"Repository",u:"https://github.com/Mr-Pythoneer/pc-build-visualizer"}] },
+
+  { id:"ssat", domain:"web", status:"shipped",
+    name:"SSAT Prep Suite",
+    tag:"An 8,851-word vocabulary trainer and 500 hand-solved maths problems, fully offline.",
+    stack:["JavaScript","SM-2 algorithm","Swift/PDFKit","Python"],
+    detail:"Built from course PDFs whose text layer was too unreliable to trust: extraction was done through Swift and PDFKit, then every one of the 500 maths questions was solved by hand and verified in Python. The vocabulary trainer uses SM-2 spaced repetition over 8,851 words and 1,485 questions. Runs entirely offline.",
+    links:[] }
+];
+
+var STATUS_LABEL = {live:"Live", shipped:"Shipped", progress:"In Progress", private:"Private"};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function el(tag, cls, txt){ var n=document.createElement(tag); if(cls)n.className=cls; if(txt!=null)n.textContent=txt; return n; }
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function ref(i){ return "NODE " + String(i).padStart(2,"0"); }
+
+/* ============================================================
+   BUILD NODES
+   ============================================================ */
+function nodeMarkup(p, idx, level){
+  var art = el("article","node");
+  art.id = "n-" + p.id;
+  art.dataset.id = p.id;
+  art.dataset.domain = p.domain;
+  if(p.pos){ art.dataset.pos = p.pos; art.classList.add("flagship"); }
+
+  var box = el("div","box");
+  var btn = el("button","boxbtn");
+  btn.type = "button";
+  btn.setAttribute("aria-expanded","false");
+  btn.dataset.id = p.id;
+  btn.setAttribute("aria-label", p.name + " — " + STATUS_LABEL[p.status] + ". Show detail.");
+
+  var r = el("p","ref");
+  r.appendChild(el("span",null,ref(idx)));
+  var b = el("span","badge " + p.status, STATUS_LABEL[p.status]);
+  r.appendChild(b);
+  btn.appendChild(r);
+
+  btn.appendChild(el(level || "h3","nm",p.name));
+  btn.appendChild(el("p","tag",p.tag));
+
+  var chips = el("ul","chips");
+  p.stack.slice(0,4).forEach(function(s){ chips.appendChild(el("li",null,s)); });
+  btn.appendChild(chips);
+  box.appendChild(btn);
+
+  if(p.links && p.links.length){
+    var ls = el("div","nlinks");
+    p.links.forEach(function(L){
+      var a = el("a",null,L.l);
+      a.href = L.u;
+      a.rel = "noopener";
+      a.setAttribute("aria-label", L.l + " — " + p.name);
+      ls.appendChild(a);
+    });
+    box.appendChild(ls);
+  }
+
+  art.appendChild(box);
+  return art;
+}
+
+var stage = $("#stage");
+var flagships = PROJECTS.filter(function(p){ return p.flag; });
+var archive   = PROJECTS.filter(function(p){ return !p.flag; });
+
+flagships.forEach(function(p,i){ stage.appendChild(nodeMarkup(p, i+1, "h3")); });
+
+var archiveHost = $("#archive");
+var counter = flagships.length;
+DOMAINS.forEach(function(d){
+  var mine = archive.filter(function(p){ return p.domain === d.id; });
+  if(!mine.length) return;
+  var g = el("section","group");
+  g.dataset.domain = d.id;
+
+  var head = el("div","ghead");
+  var h = el("h3",null,d.name);
+  h.id = "g-"+d.id;
+  head.appendChild(h);
+  head.appendChild(el("span","gcount", String(mine.length).padStart(2,"0")+" ITEMS"));
+  head.appendChild(el("span","grule"));
+  g.appendChild(head);
+  g.setAttribute("aria-labelledby","g-"+d.id);
+
+  var grid = el("div","grid");
+  mine.forEach(function(p){ counter++; grid.appendChild(nodeMarkup(p, counter, "h4")); });
+  g.appendChild(grid);
+  archiveHost.appendChild(g);
+});
+
+/* ============================================================
+   DETAIL DRAWER
+   ============================================================ */
+var drawer = el("div","drawer");
+drawer.hidden = true;
+drawer.setAttribute("role","region");
+var openId = null, openTrigger = null;
+
+function buildDrawer(p){
+  drawer.textContent = "";
+
+  var close = el("button","close","×");
+  close.type = "button";
+  close.setAttribute("aria-label","Close detail");
+  close.addEventListener("click", function(){ closeDrawer(true); });
+  drawer.appendChild(close);
+
+  var head = el("div","dhead");
+  var h = el("h3","dtitle",p.name);
+  h.id = "dr-title";
+  head.appendChild(h);
+  var meta = el("span","dref");
+  head.appendChild(meta);
+  meta.appendChild(el("span",null,""));
+  var bwrap = el("span","dref");
+  bwrap.appendChild(el("span","badge "+p.status, STATUS_LABEL[p.status]));
+  head.appendChild(bwrap);
+  drawer.appendChild(head);
+  drawer.setAttribute("aria-labelledby","dr-title");
+
+  drawer.appendChild(el("p","dbody",p.detail));
+
+  var m = el("div","meta");
+  var c1 = el("div");
+  c1.appendChild(el("span","k","Stack"));
+  var chips = el("ul","chips");
+  chips.style.marginTop = "0";
+  p.stack.forEach(function(s){ chips.appendChild(el("li",null,s)); });
+  c1.appendChild(chips);
+  m.appendChild(c1);
+
+  var c2 = el("div");
+  c2.appendChild(el("span","k","Domain"));
+  var dn = DOMAINS.filter(function(d){return d.id===p.domain;})[0];
+  c2.appendChild(el("span",null, dn ? dn.name : p.domain));
+  m.appendChild(c2);
+
+  if(p.note){
+    var c3 = el("div");
+    c3.appendChild(el("span","k","Availability"));
+    c3.appendChild(el("span",null,p.note));
+    m.appendChild(c3);
+  }
+  drawer.appendChild(m);
+
+  if(p.links && p.links.length){
+    var ls = el("div","links");
+    p.links.forEach(function(L){
+      var a = el("a",null,L.l);
+      a.href = L.u;
+      if(/^https?:/.test(L.u)) a.rel = "noopener";
+      ls.appendChild(a);
+    });
+    drawer.appendChild(ls);
+  }
+}
+
+function closeDrawer(refocus){
+  if(!openId) return;
+  drawer.hidden = true;
+  if(openTrigger){
+    openTrigger.setAttribute("aria-expanded","false");
+    if(openTrigger.parentNode) openTrigger.parentNode.classList.remove("open");
+    if(refocus) openTrigger.focus();
+  }
+  if(drawer.parentNode) drawer.parentNode.removeChild(drawer);
+  openId = null; openTrigger = null;
+}
+
+function openDrawer(id, trigger, scroll){
+  var p = PROJECTS.filter(function(x){ return x.id===id; })[0];
+  if(!p) return;
+  if(openId === id){ closeDrawer(true); return; }
+  closeDrawer(false);
+
+  buildDrawer(p);
+  var art = trigger.closest(".node");
+
+  if(art.classList.contains("flagship")){
+    // ring nodes: drawer docks directly beneath the stage
+    stage.parentNode.insertBefore(drawer, stage.nextSibling);
+    drawer.style.margin = "0 24px 24px";
+  } else {
+    // archive cards: drawer spans the full grid row after the card
+    art.parentNode.insertBefore(drawer, art.nextSibling);
+    drawer.style.margin = "";
+  }
+
+  drawer.hidden = false;
+  trigger.setAttribute("aria-expanded","true");
+  if(trigger.parentNode) trigger.parentNode.classList.add("open");
+  openId = id; openTrigger = trigger;
+
+  if(scroll){
+    drawer.scrollIntoView({block:"nearest", behavior: RM ? "auto" : "smooth"});
+  }
+}
+
+document.addEventListener("click", function(e){
+  var b = e.target.closest ? e.target.closest(".node .boxbtn") : null;
+  if(b){ e.preventDefault(); openDrawer(b.dataset.id, b, false); }
+});
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape" && openId) closeDrawer(true);
+});
+
+/* ============================================================
+   MANHATTAN TRACE ROUTER
+   ============================================================ */
+var svg = $("#traces");
+var NS = "http://www.w3.org/2000/svg";
+
+function rel(node, origin){
+  var r = node.getBoundingClientRect();
+  return { x:r.left-origin.left, y:r.top-origin.top, w:r.width, h:r.height,
+           cx:r.left-origin.left+r.width/2, cy:r.top-origin.top+r.height/2 };
+}
+
+/* 3-segment Z route between two boxes, terminating on the box edges */
+function routePath(a, b){
+  var dx = b.cx - a.cx, dy = b.cy - a.cy;
+  if(Math.abs(dx) > Math.abs(dy)){
+    var sx = dx > 0 ? a.x + a.w : a.x, sy = a.cy;
+    var ex = dx > 0 ? b.x : b.x + b.w, ey = b.cy;
+    var mx = (sx + ex) / 2;
+    return { d:"M "+sx+" "+sy+" H "+mx+" V "+ey+" H "+ex, ex:ex, ey:ey };
+  }
+  var sy2 = dy > 0 ? a.y + a.h : a.y, sx2 = a.cx;
+  var ey2 = dy > 0 ? b.y : b.y + b.h, ex2 = b.cx;
+  var my = (sy2 + ey2) / 2;
+  return { d:"M "+sx2+" "+sy2+" V "+my+" H "+ex2+" V "+ey2, ex:ex2, ey:ey2 };
+}
+
+/* narrow layout: nodes stack, so traces tap off a vertical bus on the left */
+function routeSpine(a, b, busX){
+  var sy = a.y + a.h - 14;
+  var ey = b.y + b.h / 2;
+  return { d:"M "+a.x+" "+sy+" H "+busX+" V "+ey+" H "+b.x, ex:b.x, ey:ey };
+}
+
+var SPINE = matchMedia("(max-width:900px)");
+var traceMap = {};   /* project id -> {trace, pulse, pad} */
+
+function drawTraces(){
+  var origin = svg.getBoundingClientRect();
+  var root = $("#node-root");
+  if(!root) return;
+  svg.setAttribute("viewBox","0 0 "+origin.width+" "+origin.height);
+  svg.setAttribute("width", origin.width);
+  svg.setAttribute("height", origin.height);
+  svg.textContent = "";
+  traceMap = {};
+
+  var a = rel(root.querySelector(".box"), origin);
+  var spine = SPINE.matches;
+  var busX = Math.max(6, a.x - 22);
+
+  flagships.forEach(function(p, i){
+    var art = $("#n-"+p.id);
+    if(!art || art.classList.contains("filtered-out")) return;
+    var b = rel(art.querySelector(".box"), origin);
+    var R = spine ? routeSpine(a, b, busX) : routePath(a, b);
+
+    var g = document.createElementNS(NS,"g");
+
+    var t = document.createElementNS(NS,"path");
+    t.setAttribute("class","trace");
+    t.setAttribute("d", R.d);
+    g.appendChild(t);
+
+    var pulse = document.createElementNS(NS,"path");
+    pulse.setAttribute("class","pulse");
+    pulse.setAttribute("d", R.d);
+    g.appendChild(pulse);
+
+    var pad = document.createElementNS(NS,"circle");
+    pad.setAttribute("class","pad");
+    pad.setAttribute("cx", R.ex);
+    pad.setAttribute("cy", R.ey);
+    pad.setAttribute("r", 3.2);
+    g.appendChild(pad);
+
+    svg.appendChild(g);
+
+    /* measure after insertion so getTotalLength is valid */
+    var L = t.getTotalLength();
+    t.style.setProperty("--len", L);
+    t.style.setProperty("--d", (i*0.13)+"s");
+    pulse.style.setProperty("--len", L);
+    pulse.style.setProperty("--gap", Math.max(L-5, 10));
+    pulse.style.setProperty("--d", (i*0.5)+"s");
+
+    traceMap[p.id] = {t:t, pulse:pulse, pad:pad};
+  });
+}
+
+/* hover / focus highlights the matching trace */
+function setTraceActive(id, on){
+  var m = traceMap[id];
+  if(!m) return;
+  m.t.classList.toggle("on", on);
+  m.pad.classList.toggle("on", on);
+}
+["mouseenter","focus"].forEach(function(ev){
+  stage.addEventListener(ev, function(e){
+    var art = e.target.closest ? e.target.closest(".node") : null;
+    if(art && art.dataset.id) setTraceActive(art.dataset.id, true);
+  }, true);
+});
+["mouseleave","blur"].forEach(function(ev){
+  stage.addEventListener(ev, function(e){
+    var art = e.target.closest ? e.target.closest(".node") : null;
+    if(art && art.dataset.id) setTraceActive(art.dataset.id, false);
+  }, true);
+});
+
+/* rAF is throttled to zero in a backgrounded tab, so pair it with a timeout
+   fallback — otherwise a resize while hidden leaves the traces stale. */
+var raf = null, rafTimer = null;
+function scheduleRedraw(){
+  if(raf) cancelAnimationFrame(raf);
+  if(rafTimer) clearTimeout(rafTimer);
+  var done = false;
+  function run(){
+    if(done) return;
+    done = true; raf = null; rafTimer = null;
+    drawTraces();
+  }
+  raf = requestAnimationFrame(run);
+  rafTimer = setTimeout(run, 120);
+}
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden) scheduleRedraw();
+});
+if(window.ResizeObserver){
+  new ResizeObserver(scheduleRedraw).observe(stage);
+} else {
+  window.addEventListener("resize", scheduleRedraw);
+}
+window.addEventListener("resize", scheduleRedraw);
+
+/* ============================================================
+   TERMINAL : typewriter + command engine
+   ============================================================ */
+var bootBody = $("#boot-body");
+var bootSt   = $("#boot-st");
+
+function line(text, cls){
+  var p = el("p","ln " + (cls||"out"));
+  p.textContent = text;
+  bootBody.appendChild(p);
+  bootBody.scrollTop = bootBody.scrollHeight;
+  return p;
+}
+
+function type(text, cls, speed){
+  return new Promise(function(res){
+    var p = line("", cls);
+    if(RM){ p.textContent = text; res(p); return; }
+    var cur = el("span","cursor");
+    p.appendChild(cur);
+    var i = 0;
+    (function step(){
+      if(i >= text.length){ if(cur.parentNode) cur.parentNode.removeChild(cur); res(p); return; }
+      cur.insertAdjacentText("beforebegin", text.charAt(i++));
+      bootBody.scrollTop = bootBody.scrollHeight;
+      setTimeout(step, speed || 16);
+    })();
+  });
+}
+function pause(ms){ return new Promise(function(r){ setTimeout(r, RM ? 0 : ms); }); }
+
+var BOOT = [
+  ["$ whoami","ps"],
+  ["mr-pythoneer","out"],
+  ["","out"],
+  ["$ cat ./profile.txt","ps"],
+  ["Independent engineer. I work across four layers most people","out"],
+  ["treat as separate careers: operating systems, machine-learning","out"],
+  ["tooling, embedded firmware, and shipped applications.","out"],
+  ["","out"],
+  ["$ ./scan --domains","ps"],
+  ["[ok] systems      1 flagship  +2 archived","ok"],
+  ["[ok] ai-tooling   3 flagship  +2 archived","ok"],
+  ["[ok] embedded     0 flagship  +6 archived","ok"],
+  ["[ok] applications 1 flagship  +6 archived","ok"],
+  ["","out"],
+  ["$ cat ./availability","ps"],
+  ["AVAILABLE FOR FREELANCE WORK","warn"],
+  ["gf9929986@gmail.com","warn"],
+  ["","out"],
+  ["ready. type `help` for commands.","dimtxt"]
+];
+
+function runBoot(){
+  var i = 0;
+  (function next(){
+    if(i >= BOOT.length){
+      bootSt.textContent = "IDLE";
+      bootSt.className = "st ok";
+      return;
+    }
+    var row = BOOT[i++];
+    if(row[0] === ""){ line("", "out"); next(); return; }
+    type(row[0], row[1], row[1]==="ps" ? 26 : 9).then(function(){
+      return pause(row[1]==="ps" ? 180 : 40);
+    }).then(next);
+  })();
+}
+
+/* ---------- filtering ---------- */
+var activeFilter = "all";
+
+function applyFilter(f){
+  activeFilter = f;
+  $$(".node").forEach(function(n){
+    if(n.id === "node-root") return;
+    var show = (f === "all") || (n.dataset.domain === f);
+    n.classList.toggle("filtered-out", !show);
+  });
+  $$(".group").forEach(function(g){
+    g.style.display = (f === "all" || g.dataset.domain === f) ? "" : "none";
+  });
+  var anyFlag = flagships.some(function(p){
+    var n = $("#n-"+p.id);
+    return n && !n.classList.contains("filtered-out");
+  });
+  stage.classList.toggle("solo", !anyFlag);
+  closeDrawer(false);
+  $("#s-filter").textContent = f.toUpperCase();
+  scheduleRedraw();
+}
+
+/* ---------- commands ---------- */
+var ALIASES = {systems:"systems", os:"systems", system:"systems",
+  ai:"ai", ml:"ai", "ai-tooling":"ai",
+  embedded:"embedded", firmware:"embedded", hardware:"embedded", hw:"embedded",
+  web:"web", apps:"web", app:"web", applications:"web",
+  all:"all", none:"all", reset:"all", clear:"all"};
+
+var COMMANDS = {
+  help: function(){
+    line("available commands:","dimtxt");
+    line("  ls                     list every project","out");
+    line("  filter <domain>        systems | ai | embedded | web | all","out");
+    line("  open <name>            open a project's detail panel","out");
+    line("  contact                show contact details","out");
+    line("  status                 summarise the record","out");
+    line("  clear                  clear this console","out");
+  },
+  ls: function(){
+    DOMAINS.forEach(function(d){
+      var mine = PROJECTS.filter(function(p){ return p.domain === d.id; });
+      line("[" + d.name.toUpperCase() + "]","dimtxt");
+      mine.forEach(function(p){
+        line("  " + p.id + "  ".repeat(Math.max(1, 24-p.id.length)) + STATUS_LABEL[p.status], "out");
+      });
+    });
+  },
+  filter: function(arg){
+    var f = ALIASES[(arg||"").toLowerCase()];
+    if(!f){ line("unknown domain: " + (arg||"(none)") + " — try systems, ai, embedded, web, all","err"); return; }
+    applyFilter(f);
+    var n = $$(".node:not(.filtered-out)").length - 1;
+    line("filter = " + f + " · " + n + " nodes visible","ok");
+  },
+  open: function(arg){
+    if(!arg){ line("usage: open <project-name>","err"); return; }
+    var q = arg.toLowerCase().replace(/\s+/g,"-");
+    var p = PROJECTS.filter(function(x){
+      return x.id.indexOf(q) === 0 || x.id.indexOf(q) > -1 || x.name.toLowerCase().indexOf(arg.toLowerCase()) > -1;
+    })[0];
+    if(!p){ line("no project matching \"" + arg + "\" — try `ls`","err"); return; }
+    if(activeFilter !== "all" && activeFilter !== p.domain) applyFilter("all");
+    var art = $("#n-"+p.id);
+    var btn = art && art.querySelector(".boxbtn");
+    if(btn){ openDrawer(p.id, btn, true); line("opened " + p.name, "ok"); }
+  },
+  contact: function(){
+    line("email   gf9929986@gmail.com","warn");
+    line("github  github.com/Mr-Pythoneer","out");
+    line("status  available for freelance work","ok");
+  },
+  status: function(){
+    line("projects   " + PROJECTS.length,"out");
+    line("domains    " + DOMAINS.length,"out");
+    line("flagships  " + flagships.length,"out");
+    line("filter     " + activeFilter,"out");
+    line("ext. req   0","ok");
+  },
+  clear: function(){ bootBody.textContent = ""; }
+};
+
+$("#promptForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  var input = $("#cmd");
+  var raw = input.value.trim();
+  input.value = "";
+  if(!raw) return;
+  line("> " + raw, "ps");
+  var parts = raw.split(/\s+/);
+  var cmd = parts.shift().toLowerCase();
+  var arg = parts.join(" ");
+  if(COMMANDS[cmd]) COMMANDS[cmd](arg);
+  else line("command not found: " + cmd + " — type `help`","err");
+  bootBody.scrollTop = bootBody.scrollHeight;
+});
+
+/* ============================================================
+   SYS.STATUS
+   ============================================================ */
+function pad(n){ return String(n).padStart(2,"0"); }
+function tick(){
+  var d = new Date();
+  $("#s-clock").textContent = pad(d.getUTCHours())+":"+pad(d.getUTCMinutes())+":"+pad(d.getUTCSeconds());
+}
+function vp(){ $("#s-vp").textContent = window.innerWidth + " × " + window.innerHeight; }
+setInterval(tick, 1000); tick();
+window.addEventListener("resize", vp); vp();
+
+$("#s-proj").textContent   = PROJECTS.length;
+$("#s-dom").textContent    = DOMAINS.length;
+$("#s-motion").textContent = RM ? "REDUCED" : "FULL";
+$("#dim-a").textContent    = PROJECTS.length + " PROJECTS";
+$("#dim-b").textContent    = DOMAINS.length + " DOMAINS";
+
+var now = new Date();
+$("#tb-date").textContent = now.getUTCFullYear()+"-"+pad(now.getUTCMonth()+1)+"-"+pad(now.getUTCDate());
+$("#cf-year").textContent = "Rev C · " + now.getUTCFullYear();
+
+/* ============================================================
+   COPY EMAIL
+   ============================================================ */
+$("#copyBtn").addEventListener("click", function(){
+  var btn = this;
+  var text = $("#mailtxt").textContent.trim();
+  function done(){
+    btn.textContent = "Copied";
+    btn.classList.add("done");
+    setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else { fallback(); }
+  function fallback(){
+    var ta = el("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch(err){ btn.textContent = "Select it"; }
+    document.body.removeChild(ta);
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+drawTraces();
+setTimeout(drawTraces, 60);          /* after fonts settle */
+window.addEventListener("load", scheduleRedraw);
+$("#s-render").textContent = Math.round(performance.now() - T0) + " ms";
+runBoot();
+
+})();
+</script>
+</body>
+</html>
